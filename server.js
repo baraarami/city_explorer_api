@@ -6,13 +6,14 @@ const cors =require('cors');
 const superagent = require('superagent');
 
 
+
+
 const server = express();
 const PORT = process.env.PORT || 3030;
 server.use(cors());
 
 
 server.use(express.static('./public'));
-
 
 
 server.get('/location',locationHandelr);
@@ -53,6 +54,8 @@ function weatherHandelr(req,res){
 
 
   
+
+
   superagent.get(weaURL)
     .then(weadata=>{
       let weatherData = weadata.body.data;
@@ -72,6 +75,7 @@ function weatherHandelr(req,res){
     });
 
 }
+
 
 function parkHandelr(req,res){
 
