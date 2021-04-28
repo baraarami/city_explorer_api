@@ -3,7 +3,7 @@
 const express = require('express');
 require('dotenv').config();
 const cors =require('cors');
-
+const superagent = require('superagent');
 
 
 
@@ -11,7 +11,7 @@ const cors =require('cors');
 const server = express();
 const PORT = process.env.PORT || 3030;
 server.use(cors());
-const superagent = require('superagent');
+
 
 server.use(express.static('./public'));
 
