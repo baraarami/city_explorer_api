@@ -11,6 +11,7 @@ const superagent = require('superagent');
 
 
 const PORT= process.env.PORT || 5000;
+
 server.use(cors());
 let client;
 let DATABASE_URL = process.env.DATABASE_URL;
@@ -108,7 +109,6 @@ function Location(cityName,data){
 }
 
 
-
 function weatherHandler(req,res){
   let cityName=req.query.search_query;
   let key=process.env.WEATHER_key;
@@ -132,13 +132,17 @@ function Weather(dataW){
 
 }
 
+
 function convertDate(d){
   let date = new Date (d);
   date = date.toDateString();
   return date;
 }
 
-function parkHandler(req,res){
+
+
+function parkHandelr(req,res){
+
 
   let cityName=req.query.search_query;
   let key = process.env.PARK_KEY;
