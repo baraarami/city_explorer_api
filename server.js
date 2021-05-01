@@ -1,33 +1,28 @@
+  
 'use strict';
 
-const express= require('express');
-const server=express();
+const express = require('express');
 require('dotenv').config();
+const cors = require('cors');
 const pg = require('pg');
-const cors=require('cors');
+
+
+
+const server = express();
+const PORT = process.env.PORT || 3000;
+server.use(cors());
+const client = new pg.Client(process.env.DATABASE_URL);
 const superagent = require('superagent');
 
-// const client = new pg.Client(process.env.DATABASE_URL);
 
 
-const PORT= process.env.PORT || 5000;
-server.use(cors());
-let client;
-let DATABASE_URL = process.env.DATABASE_URL;
 
-server.get('/', (req,res)=>{
-  res.send('<h1> Welcome To Home Page ♥ </h1>');
-});
-
-
-server.get('/location', LocationHandler);
-server.get('/weather', weatherHandler);
-server.get('/parks' , parkHandler);
+server.get('/location', locationHandelr);
+server.get('/weather', weatherHandelr);
+server.get('/parks', parkHandelr);
 server.get('/get', getLocationData);
-server.get('*' , notFound);
-client = new pg.Client({
-  connectionString: DATABASE_URL,
-});
+server.get('*', errorHandelr);
+
 
 
 
@@ -58,9 +53,7 @@ function getLocationData(req, res) {
 }
 
 
-
-
-function LocationHandler(req, res) {
+function locationHandelr(req, res) {
 
   let cityName = req.query.city;
 
@@ -99,59 +92,46 @@ function LocationHandler(req, res) {
     });
 
 }
-function Location(cityName,data){
-  this.search_query=cityName;
-  this.formatted_query=data[0].display_name;
-  this.latitude=data[0].lat;
-  this.longitude=data[0].lon;
 
-}
+function weatherHandelr(req, res) {
 
+  let cityName = req.query.search_query;
+  let key = process.env.WEATHER_KEY;
+  let weaURL = `http://api.weatherbit.io/v2.0/forecast/daily?key=${key}&city=${cityName}&days=5`;
 
+  superagent.get(weaURL)
+    .then(weadata => {
+      let weatherData = weadata.body.data;
 
-function weatherHandler(req,res){
-  let cityName=req.query.search_query;
-  let key=process.env.WEATHER_key;
-  let weatherURL= `http://api.weatherbit.io/v2.0/forecast/daily?key=${key}&city=${cityName}&days=5`;
+      let allweatherdata = weatherData.map((item) => {
 
-  superagent.get(weatherURL)
-    .then(aPIData=>{
-      let weatherData= aPIData.body.data;
-      let allWeather=weatherData.map((item)=>{
         return new Weather(item);
+
       });
-      res.send(allWeather);
+
+      res.send(allweatherdata);
+    })
+    .catch(error => {
+
+      res.send(error);
     });
-}
-
-
-
-function Weather(dataW){
-  this.forecast=dataW.weather.description ;
-  this.time =convertDate(dataW.datetime);
 
 }
 
-function convertDate(d){
-  let date = new Date (d);
-  date = date.toDateString();
-  return date;
-}
+function parkHandelr(req, res) {
 
-function parkHandler(req,res){
-
-  let cityName=req.query.search_query;
+  let cityName = req.query.search_query;
   let key = process.env.PARK_KEY;
   let parkURL = `https://developer.nps.gov/api/v1/parks?q=${cityName}&api_key=${key}`;
 
 
   superagent.get(parkURL)
-    .then(paData=>{
+    .then(paData => {
 
-      let parkData=paData.body.data;
+      let parkData = paData.body.data;
 
 
-      let parkInfo = parkData.map((item)=>{
+      let parkInfo = parkData.map((item) => {
 
         return new Park(item);
 
@@ -160,30 +140,54 @@ function parkHandler(req,res){
       res.send(parkInfo);
 
     })
-    .catch(error=>{
+    .catch(error => {
 
       res.send(error);
     });
 
 
 }
-function Park(cityName){
-  this.name=cityName.fullName;
-  this.address=`${cityName.addresses[0].line1}, ${cityName.addresses[0].city}, ${cityName.addresses[0].stateCode} ${cityName.addresses[0].postalCode}`;
-  this.fee='0.00';
-  this.description=cityName.description;
-  this.url=cityName.url;
 
-}
-
-function notFound(req,res){
-  let objError = {
+function errorHandelr(req, res) {
+  let errObj = {
     status: 500,
-    responseText: 'Sorry, something went wrong',
+    resText: 'Sorry, something went wrong'
   };
-  res.status(500).send(objError);
+  res.status(404).send(errObj);
+
 }
 
+
+function convertDate(d) {
+  let date = new Date(d);
+  date = date.toDateString();
+  return date;
+}
+
+function Weather(locData) {
+  this.forecast = locData.weather.description;
+  this.time = convertDate(locData.datetime);
+
+}
+
+function Location(cityName, locData) {
+
+  this.search_query = cityName;
+  this.formatted_query = locData[0].display_name;
+  this.latitude = locData[0].lat;
+  this.longitude = locData[0].lon;
+
+}
+
+
+function Park(cityName) {
+  this.name = cityName.fullName;
+  this.address = `${cityName.addresses[0].line1}, ${cityName.addresses[0].city}, ${cityName.addresses[0].stateCode} ${cityName.addresses[0].postalCode}`;
+  this.fee = '0.00';
+  this.description = cityName.description;
+  this.url = cityName.url;
+
+}
 
 client.connect()
   .then(() => {
