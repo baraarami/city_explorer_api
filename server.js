@@ -1,4 +1,3 @@
-  
 'use strict';
 
 const express = require('express');
@@ -9,7 +8,7 @@ const pg = require('pg');
 
 
 const server = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3030;
 server.use(cors());
 const client = new pg.Client(process.env.DATABASE_URL);
 const superagent = require('superagent');
